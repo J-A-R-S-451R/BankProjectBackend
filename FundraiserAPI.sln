@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32901.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FundraiserAPI", "FundraiserAPI\FundraiserAPI.csproj", "{BB9938A6-9CC6-4DD6-ACA7-311965A27501}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "FundraiserDB", "FundraiserDB\FundraiserDB.sqlproj", "{4EF80AD3-4883-42B6-BCFD-0A17C9F8DA51}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BB9938A6-9CC6-4DD6-ACA7-311965A27501}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB9938A6-9CC6-4DD6-ACA7-311965A27501}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB9938A6-9CC6-4DD6-ACA7-311965A27501}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB9938A6-9CC6-4DD6-ACA7-311965A27501}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EF80AD3-4883-42B6-BCFD-0A17C9F8DA51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EF80AD3-4883-42B6-BCFD-0A17C9F8DA51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EF80AD3-4883-42B6-BCFD-0A17C9F8DA51}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{4EF80AD3-4883-42B6-BCFD-0A17C9F8DA51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EF80AD3-4883-42B6-BCFD-0A17C9F8DA51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EF80AD3-4883-42B6-BCFD-0A17C9F8DA51}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {30D6986F-33B9-43A8-99A2-0AECDF1F93F5}
+	EndGlobalSection
+EndGlobal
