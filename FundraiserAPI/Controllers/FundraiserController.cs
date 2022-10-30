@@ -26,16 +26,30 @@ namespace FundraiserAPI.Controllers
         }
 
         [HttpPost]
-        public SessionToken AddUser(UserProfile user)
+        public ActionResult<SessionToken> AddUser(UserProfile user)
         {
-            return fundraiserBL.AddUser(user);
-
+            try
+            {
+                return Ok(fundraiserBL.AddUser(user));
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
         }
+
         [HttpPost]
-        public SessionToken LoginUser()
+        public ActionResult<SessionToken> LoginUser()
         {
-            string authHeader = HttpContext.Request.Headers.Authorization;
-            return fundraiserBL.LoginUser(authHeader);
+            try
+            {
+                string authHeader = HttpContext.Request.Headers.Authorization;
+                return fundraiserBL.LoginUser(authHeader);
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
         }
     }
 }

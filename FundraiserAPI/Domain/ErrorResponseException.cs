@@ -1,4 +1,6 @@
-﻿namespace FundraiserAPI.Domain
+﻿using System.Net;
+
+namespace FundraiserAPI.Domain
 {
     public class ErrorResponseException : Exception
     {
@@ -6,13 +8,14 @@
         {
         }
         
-        public ErrorResponseException(string message, string errorCode)
+        public ErrorResponseException(string message, string errorCode, HttpStatusCode httpCode)
             : base(message)
         {
             ErrorData = new ErrorResponseData()
             {
                 ErrorCode = errorCode,
-                ErrorMessage = message
+                ErrorMessage = message,
+                HttpCode = httpCode
             };
         }
 

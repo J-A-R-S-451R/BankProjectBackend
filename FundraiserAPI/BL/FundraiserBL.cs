@@ -1,5 +1,6 @@
 ﻿using FundraiserAPI.Domain;
 using FundraiserAPI.EntityFramework;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Buffers.Text;
@@ -8,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Net;
 
 namespace FundraiserAPI.BL
 {
@@ -17,12 +19,12 @@ namespace FundraiserAPI.BL
         {
             if (!IsValidUsername(user.Username))
             {
-                throw new ErrorResponseException("Your username isn't valid.", ErrorResponseCodes.USERNAME_NOT_VALID);
+                throw new ErrorResponseException("Your username isn't valid.", ErrorResponseCodes.USERNAME_NOT_VALID, HttpStatusCode.BadRequest);
             }
 
             if (!IsPasswordStrong(user.Password))
             {
-                throw new ErrorResponseException("Your password isn't strong enough.", ErrorResponseCodes.PASSWORD_TOO_WEAK);
+                throw new ErrorResponseException("Your password isn't strong enough.", ErrorResponseCodes.PASSWORD_TOO_WEAK, HttpStatusCode.BadRequest);
             }
 
             EntityEntry<Login> userLogin = null;
@@ -31,7 +33,7 @@ namespace FundraiserAPI.BL
             {
                 if (fdb.Logins.Any(x => x.Username == user.Username))
                 {
-                    throw new ErrorResponseException("There is already an existing user with this username.", ErrorResponseCodes.USER_ALREADY_EXISTS);
+                    throw new ErrorResponseException("There is already an existing user with this username.", ErrorResponseCodes.USER_ALREADY_EXISTS, HttpStatusCode.BadRequest);
                 }
 
                 userLogin = fdb.Logins.Add(new Login()
@@ -98,7 +100,7 @@ namespace FundraiserAPI.BL
                 Login currentUser = fdb.Logins.Where(x => x.Username == user.Username).SingleOrDefault();
                 if(currentUser == null)
                 {
-                    throw new ErrorResponseException("The username does not exist", ErrorResponseCodes.USER_DNE);
+                    throw new ErrorResponseException("The username does not exist", ErrorResponseCodes.USER_DNE, HttpStatusCode.BadRequest);
                 }
 
                 if(currentUser.Password == user.Password)
@@ -107,7 +109,7 @@ namespace FundraiserAPI.BL
                 }
                 else
                 {
-                    throw new ErrorResponseException("The password is not correct", ErrorResponseCodes.PASSWORD_INCORRECT);
+                    throw new ErrorResponseException("The password is not correct", ErrorResponseCodes.PASSWORD_INCORRECT, HttpStatusCode.BadRequest);
                 }
             }
 
@@ -162,6 +164,14 @@ namespace FundraiserAPI.BL
                 return profile;
 
             }
+        }
+
+        public ObjectResult RespondWithError(ErrorResponseException exception)
+        {
+            return new ObjectResult(exception.ErrorData)
+            {
+                StatusCode = (int)(exception?.ErrorData?.HttpCode ?? System.Net.HttpStatusCode.InternalServerError)
+            };
         }
 
         public void DonateToFundraiser(UserProfile profile)
