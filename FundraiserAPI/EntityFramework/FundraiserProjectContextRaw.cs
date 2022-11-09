@@ -16,8 +16,10 @@ namespace FundraiserAPI.EntityFramework
         {
         }
 
+        public virtual DbSet<Donation> Donations { get; set; } = null!;
         public virtual DbSet<Fundraiser> Fundraisers { get; set; } = null!;
         public virtual DbSet<Login> Logins { get; set; } = null!;
+        public virtual DbSet<Payment> Payments { get; set; } = null!;
         public virtual DbSet<SessionToken> SessionTokens { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -30,6 +32,41 @@ namespace FundraiserAPI.EntityFramework
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Donation>(entity =>
+            {
+                entity.ToTable("Donation");
+
+                entity.Property(e => e.AddressCity).HasMaxLength(50);
+
+                entity.Property(e => e.AddressCountry).HasMaxLength(50);
+
+                entity.Property(e => e.AddressState).HasMaxLength(50);
+
+                entity.Property(e => e.AddressStreet1).HasMaxLength(50);
+
+                entity.Property(e => e.AddressStreet2).HasMaxLength(50);
+
+                entity.Property(e => e.AddressZip).HasMaxLength(50);
+
+                entity.Property(e => e.Amount).HasColumnType("money");
+
+                entity.Property(e => e.BankAccountNumber).HasMaxLength(50);
+
+                entity.Property(e => e.CreditCardNumber).HasMaxLength(50);
+
+                entity.Property(e => e.Cvv)
+                    .HasMaxLength(3)
+                    .HasColumnName("CVV");
+
+                entity.Property(e => e.Date).HasColumnType("datetime");
+
+                entity.Property(e => e.FirstName).HasMaxLength(50);
+
+                entity.Property(e => e.LastName).HasMaxLength(50);
+
+                entity.Property(e => e.PaymentType).HasMaxLength(50);
+            });
+
             modelBuilder.Entity<Fundraiser>(entity =>
             {
                 entity.ToTable("Fundraiser");
@@ -58,6 +95,25 @@ namespace FundraiserAPI.EntityFramework
                 entity.Property(e => e.SecurityQuestionAnswer).HasMaxLength(50);
 
                 entity.Property(e => e.Username).HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.ToTable("Payment");
+
+                entity.Property(e => e.BillingName).HasMaxLength(50);
+
+                entity.Property(e => e.CardType).HasMaxLength(50);
+
+                entity.Property(e => e.City).HasMaxLength(30);
+
+                entity.Property(e => e.ExpirationDate).HasColumnType("date");
+
+                entity.Property(e => e.State).HasMaxLength(10);
+
+                entity.Property(e => e.Street).HasMaxLength(50);
+
+                entity.Property(e => e.Zipcode).HasMaxLength(50);
             });
 
             modelBuilder.Entity<SessionToken>(entity =>

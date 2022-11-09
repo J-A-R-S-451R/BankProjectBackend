@@ -3,6 +3,7 @@ using FundraiserAPI.EntityFramework;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,11 @@ builder.Services.AddCors(options =>
                       });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                });
 
 //builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
 

@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[Fundraiser] (
+﻿CREATE TABLE [dbo].[Payment] (
     [Id]       INT PRIMARY KEY IDENTITY (1, 1) NOT NULL,
     [UserId] INT NOT NULL,
     [CardType] NVARCHAR(50) NOT NULL,

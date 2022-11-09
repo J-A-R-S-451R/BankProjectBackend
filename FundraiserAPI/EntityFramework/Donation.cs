@@ -1,10 +1,12 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Collections.Generic;
 
-namespace FundraiserAPI.Domain
+namespace FundraiserAPI.EntityFramework
 {
-    public class Donation
+    public partial class Donation
     {
-        public int? Id { get; set; }
+        public int Id { get; set; }
+        public int? UserId { get; set; }
         public decimal Amount { get; set; }
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
@@ -22,5 +24,4 @@ namespace FundraiserAPI.Domain
         public string Note { get; set; } = null!;
         public DateTime Date { get; set; }
     }
-
 }

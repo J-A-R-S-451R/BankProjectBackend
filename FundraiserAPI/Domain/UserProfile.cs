@@ -8,7 +8,8 @@ namespace FundraiserAPI.Domain
         public string Username { get; set; }
 
         [JsonPropertyName("password")]
-        public string Password { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Password { get; set; }
 
         [JsonPropertyName("firstName")]
         public string FirstName { get; set; }
@@ -16,5 +17,7 @@ namespace FundraiserAPI.Domain
         [JsonPropertyName("lastName")]
         public string LastName { get; set; }
 
+        [JsonIgnore]
+        public int UserId { get; set; }
     }
 }

@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Net;
+using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 
 namespace FundraiserAPI.BL
 {
@@ -92,18 +93,18 @@ namespace FundraiserAPI.BL
             return true;
         }
 
-        public SessionToken LoginUser(UserProfile user)
+        public SessionToken LoginUser(LoginCredentials credentials)
         {
             using (var fdb = new FundraiserProjectContext())
             {
  
-                Login currentUser = fdb.Logins.Where(x => x.Username == user.Username).SingleOrDefault();
-                if(currentUser == null)
+                Login currentUser = fdb.Logins.Where(x => x.Username == credentials.Username).SingleOrDefault();
+                if (currentUser == null)
                 {
                     throw new ErrorResponseException("The username does not exist", ErrorResponseCodes.USER_DNE, HttpStatusCode.BadRequest);
                 }
 
-                if(currentUser.Password == user.Password)
+                if (currentUser.Password == credentials.Password)
                 {
                     return CreateSessionTokenForUser(currentUser.Id);
                 }
@@ -112,42 +113,22 @@ namespace FundraiserAPI.BL
                     throw new ErrorResponseException("The password is not correct", ErrorResponseCodes.PASSWORD_INCORRECT, HttpStatusCode.BadRequest);
                 }
             }
-
         }
 
-        public SessionToken LoginUser(string authSlug)
+        public UserProfile? AuthTokenToProfile(string authToken)
         {
-            UserProfile? profile = new();
-            string[]? authParts = authSlug?.Split(" ");
+            if (String.IsNullOrEmpty(authToken))
+                return null;
 
-            if (authParts == null || authParts?.Length != 2)
-            {
-                throw new ErrorResponseException("Invalid Authorization header.");
-            }
+            if (authToken.StartsWith("Bearer "))
+                authToken = authToken.Substring("Bearer ".Length);
 
-            byte[] credentialsJsonBytes = Convert.FromBase64String(authParts[1]);
-            string credentialsJson = Encoding.UTF8.GetString(credentialsJsonBytes);
-
-            try
-            {
-                profile = JsonSerializer.Deserialize<UserProfile>(credentialsJson);
-            }
-            catch
-            {
-                throw new ErrorResponseException("Malformed credentials JSON.");
-            }
-
-            return LoginUser(profile ?? new UserProfile());
-        }
-
-        public UserProfile? SessionTokenToProfile(SessionToken sessionToken)
-        {
             using (var fdb = new FundraiserProjectContext())
             {
-                SessionToken? dbToken = fdb.SessionTokens.Where(x => x.SessionId == sessionToken.SessionId).SingleOrDefault();
+                SessionToken? dbToken = fdb.SessionTokens.Where(x => x.SessionId == authToken).SingleOrDefault();
                 if (dbToken == null) return null;
 
-                if (dbToken.ExpiresOn >= DateTime.UtcNow) return null;
+                if (dbToken.ExpiresOn <= DateTime.UtcNow) return null;
 
                 Login? currentUser = fdb.Logins.Where(x => x.Id == dbToken.UserId).SingleOrDefault();
                 if (currentUser == null) return null;
@@ -158,12 +139,23 @@ namespace FundraiserAPI.BL
                     FirstName = currentUser.FirstName,
                     LastName = currentUser.LastName,
                     Username = currentUser.Username,
-                    Password = currentUser.Password
+                    UserId = currentUser.Id
                 };
 
                 return profile;
 
             }
+        }
+
+        public UserProfile GetCurrentUser(string authToken)
+        {
+            UserProfile? profile = AuthTokenToProfile(authToken);
+            if (profile == null)
+            {
+                throw new ErrorResponseException("Current auth token is invalid.", ErrorResponseCodes.INVALID_AUTH_TOKEN, HttpStatusCode.Unauthorized);
+            }
+
+            return profile;
         }
 
         public ObjectResult RespondWithError(ErrorResponseException exception)
@@ -174,14 +166,130 @@ namespace FundraiserAPI.BL
             };
         }
 
-        public void DonateToFundraiser(UserProfile profile)
+        public List<Fundraiser> GetAllFundraisers()
         {
-
+            using (var fdb = new FundraiserProjectContext())
+            {
+                return (
+                    from fundraiser in fdb.Fundraisers
+                    select fundraiser
+                ).ToList();
+            }
         }
 
-        public void DonateToFundraiser()
+        public Fundraiser GetFundraiser(int id)
         {
+            Fundraiser? fundraiser = null;
+            using (var fdb = new FundraiserProjectContext())
+            {
+                fundraiser = (
+                    from fr in fdb.Fundraisers
+                    where fr.Id == id
+                    select fr
+                ).FirstOrDefault();
+            }
 
+            if (fundraiser == null)
+                throw new ErrorResponseException("Fundraiser not found.", ErrorResponseCodes.FUNDRAISER_NOT_FOUND, HttpStatusCode.NotFound);
+
+            return fundraiser;
+        }
+        
+        public List<Domain.Donation> GetDonations(int fundraiserId)
+        {
+            // This will handle if the fundraiser doesn't exist by throwing.
+            GetFundraiser(fundraiserId);
+
+            List<Domain.Donation> donations = new();
+            using (var fdb = new FundraiserProjectContext())
+            {
+                donations = (
+                    from donation in fdb.Donations
+                    where donation.FundraiserId == fundraiserId
+                    select new Domain.Donation
+                    {
+                        Id = donation.Id,
+                        FirstName = donation.FirstName,
+                        LastName = donation.LastName,
+                        Amount = donation.Amount,
+                        Note = donation.Note,
+                        Date = donation.Date
+                    }
+                ).ToList();
+            }
+
+            return donations;
+        }
+
+        public bool ProcessDonation(Domain.Donation donation, string authHeader)
+        {
+            // This will handle if the fundraiser doesn't exist by throwing.
+            GetFundraiser(donation.FundraiserId);
+
+            UserProfile? profile = AuthTokenToProfile(authHeader);
+
+            if (String.IsNullOrEmpty(donation.FirstName) || String.IsNullOrEmpty(donation.LastName))
+                throw new ErrorResponseException("Invalid name.", ErrorResponseCodes.DONATION_NAME_INVALID, HttpStatusCode.BadRequest);
+
+            if (String.IsNullOrEmpty(donation.AddressCountry)
+                || String.IsNullOrEmpty(donation.AddressState)
+                || String.IsNullOrEmpty(donation.AddressCity)
+                || String.IsNullOrEmpty(donation.AddressStreet1)
+                || String.IsNullOrEmpty(donation.AddressZip))
+            {
+                throw new ErrorResponseException("Invalid address.", ErrorResponseCodes.DONATION_ADDRESS_INVALID, HttpStatusCode.BadRequest);
+            }
+
+            if (donation.Amount < 0)
+                throw new ErrorResponseException("Donation amount must be greater than 0.", ErrorResponseCodes.DONATION_AMOUNT_INVALID, HttpStatusCode.BadRequest);
+
+            if (donation.PaymentType == "credit_card")
+            {
+                if (String.IsNullOrEmpty(donation.CreditCardNumber) || String.IsNullOrEmpty(donation.Cvv))
+                    throw new ErrorResponseException("Credit card information is invalid", ErrorResponseCodes.DONATION_CREDIT_CARD_INVALID, HttpStatusCode.BadRequest);
+
+                if (donation.BankAccountNumber != null)
+                    throw new ErrorResponseException("Bank account number shouldn't be specified.", ErrorResponseCodes.DONATION_BANK_ACCOUNT_NUMBER_INVALID, HttpStatusCode.BadRequest);
+            }
+            else if (donation.PaymentType == "bank_account")
+            {
+                if (String.IsNullOrEmpty(donation.BankAccountNumber))
+                    throw new ErrorResponseException("Bank account number is invalid", ErrorResponseCodes.DONATION_BANK_ACCOUNT_NUMBER_INVALID, HttpStatusCode.BadRequest);
+
+                if (donation.CreditCardNumber != null || donation.Cvv != null)
+                    throw new ErrorResponseException("Credit card number shouldn't be specified", ErrorResponseCodes.DONATION_CREDIT_CARD_INVALID, HttpStatusCode.BadRequest);
+            }
+            else
+                throw new ErrorResponseException("Payment type is invalid.", ErrorResponseCodes.DONATION_PAYMENT_TYPE_INVALID, HttpStatusCode.BadRequest);
+
+
+            using (var fdb = new FundraiserProjectContext())
+            {
+                fdb.Donations.Add(new EntityFramework.Donation
+                {
+                    UserId = profile?.UserId,
+                    Amount = donation.Amount,
+                    FirstName = donation.FirstName,
+                    LastName = donation.LastName,
+                    PaymentType = donation.PaymentType,
+                    CreditCardNumber = donation.CreditCardNumber,
+                    Cvv = donation.Cvv,
+                    BankAccountNumber = donation.BankAccountNumber,
+                    AddressCountry = donation.AddressCountry,
+                    AddressState = donation.AddressState,
+                    AddressCity = donation.AddressCity,
+                    AddressStreet1 = donation.AddressStreet1,
+                    AddressStreet2 = donation.AddressStreet2,
+                    AddressZip = donation.AddressZip,
+                    FundraiserId = donation.FundraiserId,
+                    Note = donation.Note,
+                    Date = DateTime.Now
+                });
+
+                fdb.SaveChanges();
+            }
+
+            return true;
         }
     }
 }

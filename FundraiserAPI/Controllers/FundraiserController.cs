@@ -39,12 +39,78 @@ namespace FundraiserAPI.Controllers
         }
 
         [HttpPost]
-        public ActionResult<SessionToken> LoginUser()
+        public ActionResult<SessionToken> LoginUser(LoginCredentials credentials)
+        {
+            try
+            {
+                return fundraiserBL.LoginUser(credentials);
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
+        [HttpGet]
+        public ActionResult<UserProfile> GetCurrentUser()
         {
             try
             {
                 string authHeader = HttpContext.Request.Headers.Authorization;
-                return fundraiserBL.LoginUser(authHeader);
+                return fundraiserBL.GetCurrentUser(authHeader);
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
+        [HttpGet]
+        public ActionResult<List<Fundraiser>> GetAllFundraisers()
+        {
+            try
+            {
+                return fundraiserBL.GetAllFundraisers();
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
+        public ActionResult<Fundraiser> GetFundraiser(int fundraiserId)
+        {
+            try
+            {
+                return fundraiserBL.GetFundraiser(fundraiserId);
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
+        [HttpGet]
+        public ActionResult<List<Domain.Donation>> GetDonations(int fundraiserId)
+        {
+            try
+            {
+                return fundraiserBL.GetDonations(fundraiserId);
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
+        [HttpPost]
+        public ActionResult SendDonation(Domain.Donation donation)
+        {
+            try
+            {
+                string authHeader = HttpContext.Request.Headers.Authorization;
+                fundraiserBL.ProcessDonation(donation, authHeader);
+                return new OkObjectResult(new {Success = true});
             }
             catch (ErrorResponseException ex)
             {
