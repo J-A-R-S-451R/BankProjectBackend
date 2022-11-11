@@ -166,7 +166,7 @@ namespace FundraiserAPI.BL
             };
         }
 
-        public List<Fundraiser> GetAllFundraisers()
+        public List<EntityFramework.Fundraiser> GetAllFundraisers()
         {
             using (var fdb = new FundraiserProjectContext())
             {
@@ -177,9 +177,9 @@ namespace FundraiserAPI.BL
             }
         }
 
-        public Fundraiser GetFundraiser(int id)
+        public EntityFramework.Fundraiser GetFundraiser(int id)
         {
-            Fundraiser? fundraiser = null;
+            EntityFramework.Fundraiser? fundraiser = null;
             using (var fdb = new FundraiserProjectContext())
             {
                 fundraiser = (
@@ -286,10 +286,54 @@ namespace FundraiserAPI.BL
                     Date = DateTime.Now
                 });
 
+                fdb.Fundraisers.Where(x => x.Id == donation.FundraiserId)
+                               .Single()
+                               .DonationTotal += donation.Amount;
+
                 fdb.SaveChanges();
             }
 
             return true;
+        }
+
+        public EntityFramework.Fundraiser CreateFundraiser(CreateFundraiser fundraiser, string authHeader)
+        {
+            const string DEFAULT_IMAGE_URL = "https://thsblog.s3.amazonaws.com/wp-content/uploads/2019/10/13222121/how_to_sell_fundraiser_tickets_online.jpg";
+
+            UserProfile? profile = AuthTokenToProfile(authHeader);
+
+            if (profile == null)
+                throw new ErrorResponseException("You must be signed in to create a fundraiser.", ErrorResponseCodes.NOT_SIGNED_IN, HttpStatusCode.BadRequest);
+
+            if (String.IsNullOrEmpty(fundraiser.Name))
+                throw new ErrorResponseException("You must have a title.", ErrorResponseCodes.FUNDRAISER_NO_TITLE, HttpStatusCode.BadRequest);
+
+            if (String.IsNullOrEmpty(fundraiser.Description))
+                throw new ErrorResponseException("You must have a description.", ErrorResponseCodes.FUNDRAISER_NO_DESCRIPTION, HttpStatusCode.BadRequest);
+
+            if (fundraiser.Goal < 10)
+                throw new ErrorResponseException("Your fundraiser goal must be at least $10.", ErrorResponseCodes.FUNDRAISER_GOAL_TOO_SMALL, HttpStatusCode.BadRequest);
+
+            fundraiser.ImageUrl = Regex.Replace(fundraiser.ImageUrl, "[^a-zA-Z0-9_\\./\\:\\?\\&=-]+", "");
+            if (String.IsNullOrEmpty(fundraiser.ImageUrl))
+                fundraiser.ImageUrl = DEFAULT_IMAGE_URL;
+
+            using (var fdb = new FundraiserProjectContext())
+            {
+                var dbFundraiser = fdb.Fundraisers.Add(new EntityFramework.Fundraiser
+                {
+                    UserId = profile.UserId,
+                    Name = fundraiser.Name,
+                    Description = fundraiser.Description,
+                    Goal = fundraiser.Goal,
+                    ImageUrl = fundraiser.ImageUrl,
+                    DonationTotal = 0
+                });
+
+                fdb.SaveChanges();
+
+                return dbFundraiser.Entity;
+            }
         }
     }
 }

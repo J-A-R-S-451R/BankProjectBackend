@@ -66,7 +66,7 @@ namespace FundraiserAPI.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<Fundraiser>> GetAllFundraisers()
+        public ActionResult<List<EntityFramework.Fundraiser>> GetAllFundraisers()
         {
             try
             {
@@ -78,7 +78,7 @@ namespace FundraiserAPI.Controllers
             }
         }
 
-        public ActionResult<Fundraiser> GetFundraiser(int fundraiserId)
+        public ActionResult<EntityFramework.Fundraiser> GetFundraiser(int fundraiserId)
         {
             try
             {
@@ -111,6 +111,20 @@ namespace FundraiserAPI.Controllers
                 string authHeader = HttpContext.Request.Headers.Authorization;
                 fundraiserBL.ProcessDonation(donation, authHeader);
                 return new OkObjectResult(new {Success = true});
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
+        [HttpPost]
+        public ActionResult<EntityFramework.Fundraiser> CreateFundraiser(CreateFundraiser fundraiser)
+        {
+            try
+            {
+                string authHeader = HttpContext.Request.Headers.Authorization;
+                return fundraiserBL.CreateFundraiser(fundraiser, authHeader);
             }
             catch (ErrorResponseException ex)
             {

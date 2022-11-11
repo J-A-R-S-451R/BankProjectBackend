@@ -15,5 +15,9 @@
         public static string DONATION_CREDIT_CARD_INVALID { get; } = "DONATION_CREDIT_CARD_INVALID";
         public static string DONATION_BANK_ACCOUNT_NUMBER_INVALID { get; } = "DONATION_BANK_ACCOUNT_NUMBER_INVALID";
         public static string DONATION_PAYMENT_TYPE_INVALID { get; } = "DONATION_PAYMENT_TYPE_INVALID";
+        public static string NOT_SIGNED_IN { get; } = "NOT_SIGNED_IN";
+        public static string FUNDRAISER_NO_TITLE { get; } = "FUNDRAISER_NO_TITLE";
+        public static string FUNDRAISER_NO_DESCRIPTION { get; } = "FUNDRAISER_NO_DESCRIPTION";
+        public static string FUNDRAISER_GOAL_TOO_SMALL { get; } = "FUNDRAISER_GOAL_TOO_SMALL";
     }
 }

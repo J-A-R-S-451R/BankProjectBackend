@@ -9,9 +9,8 @@ namespace FundraiserAPI.EntityFramework
         public int UserId { get; set; }
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
-        public int Owner { get; set; }
         public decimal Goal { get; set; }
         public decimal DonationTotal { get; set; }
-        public byte[]? Picture { get; set; }
+        public string ImageUrl { get; set; } = null!;
     }
 }

@@ -71,13 +71,9 @@ namespace FundraiserAPI.EntityFramework
             {
                 entity.ToTable("Fundraiser");
 
-                entity.Property(e => e.Description).HasMaxLength(50);
-
                 entity.Property(e => e.DonationTotal).HasColumnType("money");
 
                 entity.Property(e => e.Goal).HasColumnType("money");
-
-                entity.Property(e => e.Name).HasMaxLength(100);
             });
 
             modelBuilder.Entity<Login>(entity =>
