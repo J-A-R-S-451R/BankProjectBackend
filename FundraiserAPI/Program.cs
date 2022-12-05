@@ -15,6 +15,7 @@ builder.Services.AddCors(options =>
                       policy =>
                       {
                           policy.WithOrigins("http://localhost:3000")
+                                .WithOrigins("https://j-a-r-s-451r.github.io")
                                 .AllowCredentials()
                                 .AllowAnyHeader();
                           //policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
