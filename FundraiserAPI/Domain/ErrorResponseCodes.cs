@@ -19,5 +19,6 @@
         public static string FUNDRAISER_NO_TITLE { get; } = "FUNDRAISER_NO_TITLE";
         public static string FUNDRAISER_NO_DESCRIPTION { get; } = "FUNDRAISER_NO_DESCRIPTION";
         public static string FUNDRAISER_GOAL_TOO_SMALL { get; } = "FUNDRAISER_GOAL_TOO_SMALL";
+        public static string NAME_IS_EMPTY { get; } = "NAME_IS_EMPTY";
     }
 }

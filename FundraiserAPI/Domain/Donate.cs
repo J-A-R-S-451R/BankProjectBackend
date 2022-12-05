@@ -19,6 +19,7 @@ namespace FundraiserAPI.Domain
         public string? AddressStreet2 { get; set; }
         public string AddressZip { get; set; } = null!;
         public int FundraiserId { get; set; }
+        public string? FundraiserName { get; set; }
         public string Note { get; set; } = null!;
         public DateTime Date { get; set; }
     }

@@ -4,18 +4,26 @@ namespace FundraiserAPI.Domain
 {
     public class UserProfile
     {
-        [JsonPropertyName("username")]
-        public string Username { get; set; }
+        public string? Username { get; set; }
 
-        [JsonPropertyName("password")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Password { get; set; }
-
-        [JsonPropertyName("firstName")]
+        
         public string FirstName { get; set; }
 
-        [JsonPropertyName("lastName")]
         public string LastName { get; set; }
+
+        public string? AddressCountry { get; set; }
+
+        public string? AddressState { get; set; }
+        
+        public string? AddressCity { get; set; }
+        
+        public string? AddressStreet1 { get; set; }
+        
+        public string? AddressStreet2 { get; set; }
+        
+        public string? AddressZip { get; set; }
 
         [JsonIgnore]
         public int UserId { get; set; }

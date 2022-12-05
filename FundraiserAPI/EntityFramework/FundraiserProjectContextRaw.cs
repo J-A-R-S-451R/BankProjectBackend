@@ -80,15 +80,23 @@ namespace FundraiserAPI.EntityFramework
             {
                 entity.ToTable("Login");
 
+                entity.Property(e => e.AddressCity).HasMaxLength(50);
+
+                entity.Property(e => e.AddressCountry).HasMaxLength(50);
+
+                entity.Property(e => e.AddressState).HasMaxLength(50);
+
+                entity.Property(e => e.AddressStreet1).HasMaxLength(50);
+
+                entity.Property(e => e.AddressStreet2).HasMaxLength(50);
+
+                entity.Property(e => e.AddressZip).HasMaxLength(50);
+
                 entity.Property(e => e.FirstName).HasMaxLength(50);
 
                 entity.Property(e => e.LastName).HasMaxLength(50);
 
                 entity.Property(e => e.Password).HasMaxLength(50);
-
-                entity.Property(e => e.SecurityQuestion).HasMaxLength(50);
-
-                entity.Property(e => e.SecurityQuestionAnswer).HasMaxLength(50);
 
                 entity.Property(e => e.Username).HasMaxLength(50);
             });

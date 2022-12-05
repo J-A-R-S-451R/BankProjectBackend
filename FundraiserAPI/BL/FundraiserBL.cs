@@ -28,6 +28,9 @@ namespace FundraiserAPI.BL
                 throw new ErrorResponseException("Your password isn't strong enough.", ErrorResponseCodes.PASSWORD_TOO_WEAK, HttpStatusCode.BadRequest);
             }
 
+            if (String.IsNullOrEmpty(user.FirstName) || String.IsNullOrEmpty(user.LastName))
+                throw new ErrorResponseException("Your name must not be empty.", ErrorResponseCodes.NAME_IS_EMPTY, HttpStatusCode.BadRequest);
+
             EntityEntry<Login> userLogin = null;
 
             using (var fdb = new FundraiserProjectContext())
@@ -50,6 +53,45 @@ namespace FundraiserAPI.BL
 
             SessionToken token = CreateSessionTokenForUser(userLogin.Entity.Id);
             return token;
+        }
+
+        public void UpdateUser(UserProfile userInfo, string authToken)
+        {
+            UserProfile user = GetCurrentUser(authToken);
+
+            if (String.IsNullOrEmpty(userInfo.FirstName) || String.IsNullOrEmpty(userInfo.LastName))
+                throw new ErrorResponseException("Your name must not be empty.", ErrorResponseCodes.NAME_IS_EMPTY, HttpStatusCode.BadRequest);
+
+            using (var fdb = new FundraiserProjectContext())
+            {
+                Login dbUser = fdb.Logins.Where(x => x.Id == user.UserId).Single();
+                dbUser.FirstName = userInfo.FirstName;
+                dbUser.LastName = userInfo.LastName;
+                dbUser.AddressZip = userInfo.AddressZip;
+                dbUser.AddressStreet1 = userInfo.AddressStreet1;
+                dbUser.AddressStreet2 = userInfo.AddressStreet2;
+                dbUser.AddressCity = userInfo.AddressCity;
+                dbUser.AddressState = userInfo.AddressState;
+                dbUser.AddressCountry = userInfo.AddressCountry;
+                fdb.SaveChanges();
+            }
+        }
+
+        public void UpdateUserPassword(PasswordChange passwordChange, string authToken)
+        {
+            UserProfile user = GetCurrentUser(authToken);
+
+            if (!IsPasswordStrong(passwordChange.Password))
+            {
+                throw new ErrorResponseException("Your password isn't strong enough.", ErrorResponseCodes.PASSWORD_TOO_WEAK, HttpStatusCode.BadRequest);
+            }
+
+            using (var fdb = new FundraiserProjectContext())
+            {
+                Login dbUser = fdb.Logins.Where(x => x.Id == user.UserId).Single();
+                dbUser.Password = passwordChange.Password;
+                fdb.SaveChanges();
+            }
         }
 
         public SessionToken CreateSessionTokenForUser(int userId)
@@ -139,6 +181,12 @@ namespace FundraiserAPI.BL
                     FirstName = currentUser.FirstName,
                     LastName = currentUser.LastName,
                     Username = currentUser.Username,
+                    AddressCity = currentUser.AddressCity,
+                    AddressCountry = currentUser.AddressCountry,
+                    AddressState = currentUser.AddressState,
+                    AddressStreet1 = currentUser.AddressStreet1,
+                    AddressStreet2 = currentUser.AddressStreet2,
+                    AddressZip = currentUser.AddressZip,
                     UserId = currentUser.Id
                 };
 
@@ -172,6 +220,20 @@ namespace FundraiserAPI.BL
             {
                 return (
                     from fundraiser in fdb.Fundraisers
+                    select fundraiser
+                ).ToList();
+            }
+        }
+
+        public List<EntityFramework.Fundraiser> GetCurrentUserFundraisers(string authToken)
+        {
+            UserProfile userProfile = GetCurrentUser(authToken);
+
+            using (var fdb = new FundraiserProjectContext())
+            {
+                return (
+                    from fundraiser in fdb.Fundraisers
+                    where fundraiser.UserId == userProfile.UserId
                     select fundraiser
                 ).ToList();
             }
@@ -300,7 +362,7 @@ namespace FundraiserAPI.BL
         {
             const string DEFAULT_IMAGE_URL = "https://thsblog.s3.amazonaws.com/wp-content/uploads/2019/10/13222121/how_to_sell_fundraiser_tickets_online.jpg";
 
-            UserProfile? profile = AuthTokenToProfile(authHeader);
+            UserProfile profile = GetCurrentUser(authHeader);
 
             if (profile == null)
                 throw new ErrorResponseException("You must be signed in to create a fundraiser.", ErrorResponseCodes.NOT_SIGNED_IN, HttpStatusCode.BadRequest);
@@ -314,7 +376,7 @@ namespace FundraiserAPI.BL
             if (fundraiser.Goal < 10)
                 throw new ErrorResponseException("Your fundraiser goal must be at least $10.", ErrorResponseCodes.FUNDRAISER_GOAL_TOO_SMALL, HttpStatusCode.BadRequest);
 
-            fundraiser.ImageUrl = Regex.Replace(fundraiser.ImageUrl, "[^a-zA-Z0-9_\\./\\:\\?\\&=-]+", "");
+            fundraiser.ImageUrl = Regex.Replace(fundraiser.ImageUrl, "[^a-zA-Z0-9_\\./\\:\\?\\&=\\+%-]+", "");
             if (String.IsNullOrEmpty(fundraiser.ImageUrl))
                 fundraiser.ImageUrl = DEFAULT_IMAGE_URL;
 
@@ -334,6 +396,34 @@ namespace FundraiserAPI.BL
 
                 return dbFundraiser.Entity;
             }
+        }
+
+        public List<Domain.Donation> GetCurrentUserDonations(string authToken)
+        {
+            UserProfile user = GetCurrentUser(authToken);
+
+            List<Domain.Donation> donations = new();
+            using (var fdb = new FundraiserProjectContext())
+            {
+                donations = (
+                    from donation in fdb.Donations
+                    where donation.UserId == user.UserId
+                    join fundraiser in fdb.Fundraisers on donation.FundraiserId equals fundraiser.Id
+                    select new Domain.Donation
+                    {
+                        Id = donation.Id,
+                        FirstName = donation.FirstName,
+                        LastName = donation.LastName,
+                        Amount = donation.Amount,
+                        Note = donation.Note,
+                        Date = donation.Date,
+                        FundraiserId = fundraiser.Id,
+                        FundraiserName = fundraiser.Name
+                    }
+                ).ToList();
+            }
+
+            return donations;
         }
     }
 }

@@ -39,6 +39,36 @@ namespace FundraiserAPI.Controllers
         }
 
         [HttpPost]
+        public ActionResult UpdateUser(UserProfile userInfo)
+        {
+            try
+            {
+                string authHeader = HttpContext.Request.Headers.Authorization;
+                fundraiserBL.UpdateUser(userInfo, authHeader);
+                return new OkObjectResult(new { Success = true });
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
+        [HttpPost]
+        public ActionResult UpdateUserPassword(PasswordChange passwordChange)
+        {
+            try
+            {
+                string authHeader = HttpContext.Request.Headers.Authorization;
+                fundraiserBL.UpdateUserPassword(passwordChange, authHeader);
+                return new OkObjectResult(new { Success = true });
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
+        [HttpPost]
         public ActionResult<SessionToken> LoginUser(LoginCredentials credentials)
         {
             try
@@ -78,6 +108,20 @@ namespace FundraiserAPI.Controllers
             }
         }
 
+        [HttpGet]
+        public ActionResult<List<EntityFramework.Fundraiser>> GetCurrentUserFundraisers()
+        {
+            try
+            {
+                string authHeader = HttpContext.Request.Headers.Authorization;
+                return fundraiserBL.GetCurrentUserFundraisers(authHeader);
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
         public ActionResult<EntityFramework.Fundraiser> GetFundraiser(int fundraiserId)
         {
             try
@@ -96,6 +140,20 @@ namespace FundraiserAPI.Controllers
             try
             {
                 return fundraiserBL.GetDonations(fundraiserId);
+            }
+            catch (ErrorResponseException ex)
+            {
+                return fundraiserBL.RespondWithError(ex);
+            }
+        }
+
+        [HttpGet]
+        public ActionResult<List<Domain.Donation>> GetCurrentUserDonations()
+        {
+            try
+            {
+                string authHeader = HttpContext.Request.Headers.Authorization;
+                return fundraiserBL.GetCurrentUserDonations(authHeader);
             }
             catch (ErrorResponseException ex)
             {
